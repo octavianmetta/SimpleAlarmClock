@@ -4,6 +4,7 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -11,11 +12,13 @@ import androidx.annotation.NonNull;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
+import com.google.gson.GsonBuilder;
 import com.learntodroid.simplealarmclock.broadcastreceiver.AlarmBroadcastReceiver;
 import com.learntodroid.simplealarmclock.createalarm.DayUtil;
 
 import java.util.Calendar;
 
+import static com.learntodroid.simplealarmclock.broadcastreceiver.AlarmBroadcastReceiver.ALARM;
 import static com.learntodroid.simplealarmclock.broadcastreceiver.AlarmBroadcastReceiver.FRIDAY;
 import static com.learntodroid.simplealarmclock.broadcastreceiver.AlarmBroadcastReceiver.MONDAY;
 import static com.learntodroid.simplealarmclock.broadcastreceiver.AlarmBroadcastReceiver.RECURRING;
@@ -124,8 +127,8 @@ public class Alarm {
         intent.putExtra(FRIDAY, friday);
         intent.putExtra(SATURDAY, saturday);
         intent.putExtra(SUNDAY, sunday);
-
         intent.putExtra(TITLE, title);
+        intent.putExtra(ALARM, new GsonBuilder().create().toJson(this));
 
         PendingIntent alarmPendingIntent = PendingIntent.getBroadcast(context, alarmId, intent, 0);
 
@@ -150,22 +153,55 @@ public class Alarm {
             }
             Toast.makeText(context, toastText, Toast.LENGTH_LONG).show();
 
-            alarmManager.setExact(
-                    AlarmManager.RTC_WAKEUP,
-                    calendar.getTimeInMillis(),
-                    alarmPendingIntent
-            );
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager.setExactAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP,
+                        calendar.getTimeInMillis(),
+                        alarmPendingIntent
+                );
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                alarmManager.setExact(
+                        AlarmManager.RTC_WAKEUP,
+                        calendar.getTimeInMillis(),
+                        alarmPendingIntent
+                );
+            } else {
+                alarmManager.set(
+                        AlarmManager.RTC_WAKEUP,
+                        calendar.getTimeInMillis(),
+                        alarmPendingIntent
+                );
+            }
         } else {
             String toastText = String.format("Recurring Alarm %s scheduled for %s at %02d:%02d", title, getRecurringDaysText(), hour, minute, alarmId);
             Toast.makeText(context, toastText, Toast.LENGTH_LONG).show();
 
-            final long RUN_DAILY = 24 * 60 * 60 * 1000;
-            alarmManager.setRepeating(
-                    AlarmManager.RTC_WAKEUP,
-                    calendar.getTimeInMillis(),
-                    RUN_DAILY,
-                    alarmPendingIntent
-            );
+//            final long RUN_DAILY = 24 * 60 * 60 * 1000;
+//            alarmManager.setRepeating(
+//                    AlarmManager.RTC_WAKEUP,
+//                    calendar.getTimeInMillis(),
+//                    RUN_DAILY,
+//                    alarmPendingIntent
+//            );
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager.setExactAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP,
+                        calendar.getTimeInMillis(),
+                        alarmPendingIntent
+                );
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                alarmManager.setExact(
+                        AlarmManager.RTC_WAKEUP,
+                        calendar.getTimeInMillis(),
+                        alarmPendingIntent
+                );
+            } else {
+                alarmManager.set(
+                        AlarmManager.RTC_WAKEUP,
+                        calendar.getTimeInMillis(),
+                        alarmPendingIntent
+                );
+            }
         }
 
         this.started = true;
@@ -224,5 +260,25 @@ public class Alarm {
 
     public void setCreated(long created) {
         this.created = created;
+    }
+
+    @Override
+    public String toString() {
+        return "Alarm{" +
+                "alarmId=" + alarmId +
+                ", hour=" + hour +
+                ", minute=" + minute +
+                ", started=" + started +
+                ", recurring=" + recurring +
+                ", monday=" + monday +
+                ", tuesday=" + tuesday +
+                ", wednesday=" + wednesday +
+                ", thursday=" + thursday +
+                ", friday=" + friday +
+                ", saturday=" + saturday +
+                ", sunday=" + sunday +
+                ", title='" + title + '\'' +
+                ", created=" + created +
+                '}';
     }
 }

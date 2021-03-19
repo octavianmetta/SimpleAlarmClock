@@ -11,6 +11,8 @@ import android.widget.Toast;
 
 import androidx.lifecycle.Observer;
 
+import com.google.gson.GsonBuilder;
+import com.learntodroid.simplealarmclock.createalarm.TimePickerUtil;
 import com.learntodroid.simplealarmclock.data.Alarm;
 import com.learntodroid.simplealarmclock.data.AlarmRepository;
 import com.learntodroid.simplealarmclock.service.AlarmService;
@@ -19,6 +21,7 @@ import com.learntodroid.simplealarmclock.service.RescheduleAlarmsService;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Random;
 
 public class AlarmBroadcastReceiver extends BroadcastReceiver {
     public static final String MONDAY = "MONDAY";
@@ -30,6 +33,7 @@ public class AlarmBroadcastReceiver extends BroadcastReceiver {
     public static final String SUNDAY = "SUNDAY";
     public static final String RECURRING = "RECURRING";
     public static final String TITLE = "TITLE";
+    public static final String ALARM = "ALARM";
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -46,6 +50,17 @@ public class AlarmBroadcastReceiver extends BroadcastReceiver {
             } {
                 if (alarmIsToday(intent)) {
                     startAlarmService(context, intent);
+                    int alarmId = new Random().nextInt(Integer.MAX_VALUE);
+                    String alarmJson = intent.getStringExtra(ALARM);
+                    if (!alarmJson.isEmpty()) {
+                        try {
+                            Alarm alarm = new GsonBuilder().create().fromJson(alarmJson, Alarm.class);
+                            alarm.setAlarmId(alarmId);
+                            alarm.schedule(context);
+                        } catch (Throwable e) {
+                            e.printStackTrace();
+                        }
+                    }
                 }
             }
         }
